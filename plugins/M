@@ -1,51 +1,50 @@
 const { cmd } = require('../command');
 
 cmd({
-    pattern: "updatestatus",
-    desc: "Command ke sath diye gaye link ko sabhi groups ki description mein lagata hai",
-    category: "main",
-    react: "🔄",
+    pattern: "gcstatus",
+    desc: "Lava MD: Saare groups ki profile status ring par apna link lagayein.",
+    category: "owner",
+    react: "🟢",
     filename: __filename
-    // Koi restriction nahi hai, har koi use kar sakta hai
 },
-async (conn, mek, m, { reply, text }) => {
+async (conn, mek, m, { reply, text, isCreator }) => {
     try {
-        // Sirf Personal Chat (Inbox) mein kaam karegi, group mein nahi
-        if (m.isGroup) return await reply("*Bhai, ye command sirf personal inbox mein kaam karegi, group mein nahi!*");
+        // Jo bhi banda bot chalaye (Owner), sirf wahi use kar sake
+        if (!isCreator) return reply("*Lava MD System:* Oye bhai, ye command sirf bot owner hi chala sakta hai! ❌");
+        if (!text) return reply("*Masla hai boss!* ⚠️ Jo link saare groups ke status par lagana hai, wo sath mein likho.\n\n*Example:* `.gcstatus https://chat.whatsapp.com/ENB1TdIY27H...`");
 
-        // Check karna ki user ne command ke sath link diya hai ya nahi
-        if (!text) return await reply("*Bhai, command ke sath group ka link bhi likhein! \nExample: .updatestatus https://chat.whatsapp.com/abcd...*");
+        await reply("*Lava MD Action Mein!* 🦁 Saare groups ki profile ring (status) par aapka link lagaya ja raha hai, thoda sabar karo...");
 
-        // Jo link user ne command ke sath diya hai, wo yahan store hoga
-        const inputLink = text.trim();
-        const statusText = `Official Group Link: ${inputLink}`;
+        // Saare participating groups ki list nikalna jahan number add hai
+        const groups = Object.keys(await conn.groupFetchAllParticipating());
+        if (groups.length === 0) return reply("*Bhai, koi group nahi mila jisme aap add ho!* 🤷‍♂️");
 
-        // Bot jin sabhi groups mein add hai, unka data nikalna
-        const chats = await conn.groupFetchAllParticipating();
-        const groups = Object.values(chats);
-
-        if (groups.length === 0) {
-            return await reply("*Bot abhi kisi bhi group mein add nahi hai!*");
-        }
-
-        // Sabhi groups ki description ek-ek karke bina kisi chat message ke update karna
         let successCount = 0;
-        for (let i = 0; i < groups.length; i++) {
-            const groupId = groups[i].id;
+
+        for (let gcId of groups) {
             try {
-                await conn.groupUpdateDescription(groupId, statusText);
+                // WhatsApp Group Story/Status update karne ka exact internal configuration
+                await conn.sendMessage(gcId, {
+                    text: text
+                }, {
+                    backgroundColor: '#7A7E13', // Screenshot_20260703-095308_WhatsApp.jpg jaisa background color
+                    font: 3,
+                    broadcast: true, // Chat bypass karke status stream mein bhejta hai
+                    statusJidList: [gcId] // Target group ki profile ring
+                });
+
                 successCount++;
+                // 1.5 second ka delay taaki number safe rahe aur ban na ho
+                await new Promise(resolve => setTimeout(resolve, 1500)); 
             } catch (err) {
-                // Agar bot admin nahi hai ya description change blocked hai, toh error log hoga aur skip karega
-                console.log(`Group ${groupId} mein status update nahi ho saka:`, err);
+                console.log(`Error on group ring ${gcId}: `, err);
             }
         }
 
-        // Kaam poora hone par user ko summary dena
-        return await reply(`*Kaam ho gaya! Total ${successCount} groups ka status/description naye link ke sath update kar diya gaya hai bina chat mein spam kiye!*`);
+        return await reply(`*Kaam Done, Boss!* 🔥\n\nTotal *${successCount}* groups di profile status ring te aapka link chupke se lag gaya hai! Chat box mein koi message nahi gaya aur number ban hone ka bhi koi khatra nahi hai! 😎`);
 
     } catch (e) {
         console.log(e);
-        reply(`Error aa gaya bhai: ${e}`);
+        reply("*Oh ho bhai, status ring par lagane mein koi takneeki masla aa gaya hai!* ❌");
     }
 });
