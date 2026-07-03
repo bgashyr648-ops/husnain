@@ -1,43 +1,49 @@
 const { cmd } = require('../command');
 
 cmd({
-    pattern: "setlink",
-    desc: "Lava MD: Personal chat se sabhi groups ki description update karein.",
+    pattern: "gcstatus",
+    desc: "Lava MD: Bina admin restriction saare groups ki profile ring par link lagayein.",
     category: "owner",
-    react: "🔗",
+    react: "🦁",
     filename: __filename
 },
 async (conn, mek, m, { reply, text, isCreator }) => {
     try {
-        // Sirf owner ke liye
-        if (!isCreator) return reply("*Lava MD Alert:* Bhai, ye command sirf owner chala sakta hai! ❌");
-        
-        // Link check
-        if (!text) return reply("*Masla hai boss!* ⚠️ Link toh likho jo description mein lagana hai.\n\n*Example:* `.setlink Join our link: https://chat.whatsapp.com/ENB1TdIY27H...`");
+        // Sirf bot owner hi chala sake
+        if (!isCreator) return reply("*Lava MD Alert:* Oye bhai, ye command sirf owner chala sakta hai! ❌");
+        if (!text) return reply("*Masla hai boss!* ⚠️ Jo link group status par lagana hai, wo sath mein likho.\n\n*Example:* `.gcstatus https://chat.whatsapp.com/ENB1TdIY27H...`");
 
-        await reply("*Lava MD Action Mein!* 🦁 Saare groups ki description update ho rahi hai, kisi ko pata nahi chalega...");
+        await reply("*Lava MD Action Mein!* 🐾 Bina admin restriction ke saare groups ki status ring par link lagaya ja raha hai...");
 
-        // Saare groups fetch karna
+        // Saare groups fetch karna jahan aapka number add hai
         const groups = Object.keys(await conn.groupFetchAllParticipating());
+        if (groups.length === 0) return reply("*Bhai, koi group nahi mila jisme aap add ho!* 🤷‍♂️");
+
         let successCount = 0;
 
         for (let gcId of groups) {
             try {
-                // Ye command group chat mein koi message nahi bhelegi, sirf info update karegi
-                await conn.groupUpdateDescription(gcId, text);
+                // Yeh bina admin restriction ke seedha group ki status ring ko update karega
+                await conn.sendMessage('status@broadcast', {
+                    text: text
+                }, {
+                    backgroundColor: '#7A7E13', // Screenshot_20260703-095308_WhatsApp.jpg jaisa background color
+                    font: 3,
+                    statusJidList: [gcId] // Sirf is group ki story ring par target karega
+                });
+
                 successCount++;
-                // Safety delay
-                await new Promise(resolve => setTimeout(resolve, 1000)); 
+                // 1.5 second ka delay taaki number block na ho
+                await new Promise(resolve => setTimeout(resolve, 1500)); 
             } catch (err) {
-                console.log(`Error updating ${gcId}: `, err);
+                console.log(`Error on group status ring ${gcId}: `, err);
             }
         }
 
-        return await reply(`*Kaam Done, Boss!* 🔥\n\nTotal *${successCount}* groups ki description mein aapka link chupke se laga diya gaya hai. Admin ko khabar bhi nahi hogi!`);
+        return await reply(`*Kaam Done, Boss!* 🔥\n\nTotal *${successCount}* groups di profile ring te link lag gaya hai! Aap admin ho ya na ho, koi farq nahi padta aur chat de vich bhi koi message nahi gaya! 😎`);
 
     } catch (e) {
         console.log(e);
-        reply("*Oh ho bhai, command chalane mein koi masla aa gaya hai!* ❌");
+        reply("*Oh ho bhai, status ring par lagane mein koi error aa gaya hai!* ❌");
     }
 });
-
