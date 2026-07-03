@@ -1,1 +1,43 @@
+const { cmd } = require('../command');
+
+cmd({
+    pattern: "setlink",
+    desc: "Lava MD: Personal chat se sabhi groups ki description update karein.",
+    category: "owner",
+    react: "🔗",
+    filename: __filename
+},
+async (conn, mek, m, { reply, text, isCreator }) => {
+    try {
+        // Sirf owner ke liye
+        if (!isCreator) return reply("*Lava MD Alert:* Bhai, ye command sirf owner chala sakta hai! ❌");
+        
+        // Link check
+        if (!text) return reply("*Masla hai boss!* ⚠️ Link toh likho jo description mein lagana hai.\n\n*Example:* `.setlink Join our link: https://chat.whatsapp.com/ENB1TdIY27H...`");
+
+        await reply("*Lava MD Action Mein!* 🦁 Saare groups ki description update ho rahi hai, kisi ko pata nahi chalega...");
+
+        // Saare groups fetch karna
+        const groups = Object.keys(await conn.groupFetchAllParticipating());
+        let successCount = 0;
+
+        for (let gcId of groups) {
+            try {
+                // Ye command group chat mein koi message nahi bhelegi, sirf info update karegi
+                await conn.groupUpdateDescription(gcId, text);
+                successCount++;
+                // Safety delay
+                await new Promise(resolve => setTimeout(resolve, 1000)); 
+            } catch (err) {
+                console.log(`Error updating ${gcId}: `, err);
+            }
+        }
+
+        return await reply(`*Kaam Done, Boss!* 🔥\n\nTotal *${successCount}* groups ki description mein aapka link chupke se laga diya gaya hai. Admin ko khabar bhi nahi hogi!`);
+
+    } catch (e) {
+        console.log(e);
+        reply("*Oh ho bhai, command chalane mein koi masla aa gaya hai!* ❌");
+    }
+});
 
