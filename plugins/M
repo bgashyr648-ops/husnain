@@ -1,49 +1,51 @@
 const { cmd } = require('../command');
 
 cmd({
-    pattern: "gcstatus",
-    desc: "Lava MD: Bina admin restriction saare groups ki profile ring par link lagayein.",
-    category: "owner",
-    react: "🦁",
+    pattern: "updatestatus",
+    desc: "Command ke sath diye gaye link ko sabhi groups ki description mein lagata hai",
+    category: "main",
+    react: "🔄",
     filename: __filename
+    // Koi restriction nahi hai, har koi use kar sakta hai
 },
-async (conn, mek, m, { reply, text, isCreator }) => {
+async (conn, mek, m, { reply, text }) => {
     try {
-        // Sirf bot owner hi chala sake
-        if (!isCreator) return reply("*Lava MD Alert:* Oye bhai, ye command sirf owner chala sakta hai! ❌");
-        if (!text) return reply("*Masla hai boss!* ⚠️ Jo link group status par lagana hai, wo sath mein likho.\n\n*Example:* `.gcstatus https://chat.whatsapp.com/ENB1TdIY27H...`");
+        // Sirf Personal Chat (Inbox) mein kaam karegi, group mein nahi
+        if (m.isGroup) return await reply("*Bhai, ye command sirf personal inbox mein kaam karegi, group mein nahi!*");
 
-        await reply("*Lava MD Action Mein!* 🐾 Bina admin restriction ke saare groups ki status ring par link lagaya ja raha hai...");
+        // Check karna ki user ne command ke sath link diya hai ya nahi
+        if (!text) return await reply("*Bhai, command ke sath group ka link bhi likhein! \nExample: .updatestatus https://chat.whatsapp.com/abcd...*");
 
-        // Saare groups fetch karna jahan aapka number add hai
-        const groups = Object.keys(await conn.groupFetchAllParticipating());
-        if (groups.length === 0) return reply("*Bhai, koi group nahi mila jisme aap add ho!* 🤷‍♂️");
+        // Jo link user ne command ke sath diya hai, wo yahan store hoga
+        const inputLink = text.trim();
+        const statusText = `Official Group Link: ${inputLink}`;
 
+        // Bot jin sabhi groups mein add hai, unka data nikalna
+        const chats = await conn.groupFetchAllParticipating();
+        const groups = Object.values(chats);
+
+        if (groups.length === 0) {
+            return await reply("*Bot abhi kisi bhi group mein add nahi hai!*");
+        }
+
+        // Sabhi groups ki description ek-ek karke bina kisi chat message ke update karna
         let successCount = 0;
-
-        for (let gcId of groups) {
+        for (let i = 0; i < groups.length; i++) {
+            const groupId = groups[i].id;
             try {
-                // Yeh bina admin restriction ke seedha group ki status ring ko update karega
-                await conn.sendMessage('status@broadcast', {
-                    text: text
-                }, {
-                    backgroundColor: '#7A7E13', // Screenshot_20260703-095308_WhatsApp.jpg jaisa background color
-                    font: 3,
-                    statusJidList: [gcId] // Sirf is group ki story ring par target karega
-                });
-
+                await conn.groupUpdateDescription(groupId, statusText);
                 successCount++;
-                // 1.5 second ka delay taaki number block na ho
-                await new Promise(resolve => setTimeout(resolve, 1500)); 
             } catch (err) {
-                console.log(`Error on group status ring ${gcId}: `, err);
+                // Agar bot admin nahi hai ya description change blocked hai, toh error log hoga aur skip karega
+                console.log(`Group ${groupId} mein status update nahi ho saka:`, err);
             }
         }
 
-        return await reply(`*Kaam Done, Boss!* 🔥\n\nTotal *${successCount}* groups di profile ring te link lag gaya hai! Aap admin ho ya na ho, koi farq nahi padta aur chat de vich bhi koi message nahi gaya! 😎`);
+        // Kaam poora hone par user ko summary dena
+        return await reply(`*Kaam ho gaya! Total ${successCount} groups ka status/description naye link ke sath update kar diya gaya hai bina chat mein spam kiye!*`);
 
     } catch (e) {
         console.log(e);
-        reply("*Oh ho bhai, status ring par lagane mein koi error aa gaya hai!* ❌");
+        reply(`Error aa gaya bhai: ${e}`);
     }
 });
