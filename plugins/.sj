@@ -1,69 +1,106 @@
-const { cmd } = require('../command');
+const axios = require("axios");
+const { cmd } = require("../command");
 
 cmd({
-    pattern: "a",
-    desc: "Random video share karne ke liye",
-    category: "fun",
-    react: "💔",
-    filename: __filename,
-    use: ".a"
-}, async (conn, mek, m, { reply }) => {
+    pattern: "xnxx",
+    alias: ["jav", "javidl"],
+    desc: "Search and download random xnxx style videos",
+    category: "download",
+    react: "🔞",
+    filename: __filename
+}, async (conn, mek, m, { from, q, reply }) => {
     try {
-        const videoUrls = [
-            "https://files.catbox.moe/tmiz6x.mp4",
-             "https://files.catbox.moe/l323fi.mp4",
-             "https://files.catbox.moe/l323fi.mp4",
-             "https://files.catbox.moe/eywvi9.mp4",
-            "https://files.catbox.moe/4kf22n.mp4",
-            "https://files.catbox.moe/q593vp.mp4",
-            "https://files.catbox.moe/rqa06l.mp4",
-            "https://files.catbox.moe/rqa06l.mp4",
-            "https://files.catbox.moe/3rhm0o.mp4",
-            "https://files.catbox.moe/cy6d9h.mp4",
-            "https://files.catbox.moe/4cngxm.mp4",
-            "https://files.catbox.moe/03v9r3.mp4",
-            "https://files.catbox.moe/03v9r3.mp4",
-            "https://files.catbox.moe/mwxtq3.mp4",
-            "https://files.catbox.moe/z3j9qd.mp4",
-            "https://files.catbox.moe/lu683j.mp4",
-            "https://files.catbox.moe/qk0cgw.mp4",
-            "https://files.catbox.moe/c4xjll.mp4",
-            "https://files.catbox.moe/ya7rvd.mp4",
-            "https://files.catbox.moe/5f85sq.mp4",
-            "https://files.catbox.moe/k1fajp.mp4",
-            "https://files.catbox.moe/k4jbpb.mp4",
-            "https://files.catbox.moe/9bjhsk.mp4",
-            "https://files.catbox.moe/ihdnij.mp4",
-            "https://files.catbox.moe/xh2wm4.mp4",
-            "https://files.catbox.moe/ltpd6m.mp4",
-            "https://files.catbox.moe/zf14q1.mp4",
-            "https://files.catbox.moe/zf14q1.mp4",
-            "https://files.catbox.moe/bnyt3v.mp4",
-            "https://files.catbox.moe/a1l6ac.mp4",
-            "https://files.catbox.moe/liqskk.mp4",
-            "https://files.catbox.moe/8fem9l.mp4",
-            "https://files.catbox.moe/40uie3.mp4",
-            "https://files.catbox.moe/9s99z3.mp4",
-            "https://files.catbox.moe/6msuhj.mp4",
-            "https://files.catbox.moe/w7kdva.mp4",
-            "https://files.catbox.moe/iiwo7y.mp4",
-            "https://files.catbox.moe/guohji.mp4",
-            "https://files.catbox.moe/ms0j4g.mp4",
-            "https://files.catbox.moe/aqnmev.mp4",
-           
-            
+        // Default search queries array
+        const defaultQueries = [
+            "hot",
+            "girl", 
+            "boy",
+            "russian",
+            "american",
+            "asian",
+            "european",
+            "model",
+            "actress",
+            "celebrity",
+            "Russian",
+            "dance",
+            "music",
+            "fashion",
+            "beauty",
+            "fitness"
         ];
 
-        const randomUrl = videoUrls[Math.floor(Math.random() * videoUrls.length)];
+        // Use provided query or pick random default
+        let searchQuery = q;
+        if (!searchQuery) {
+            searchQuery = defaultQueries[Math.floor(Math.random() * defaultQueries.length)];
+            await reply(`🎯 No query provided! Searching random: *${searchQuery}*`);
+        }
 
-        await conn.sendMessage(m.chat, { 
-            video: { url: randomUrl }, 
-            mimetype: "video/mp4",
-            caption: "*Ye lo, Bagga Sher ki taraf se ek nayi video!* 🎬\n\n*Powered by Love MD*" 
+        await conn.sendMessage(from, { react: { text: '⏳', key: m.key } });
+
+        // Search for videos
+        const searchUrl = `https://api.deline.web.id/search/xnxx?q=${encodeURIComponent(searchQuery)}`;
+        const searchRes = await axios.get(searchUrl);
+        const searchData = searchRes.data;
+
+        if (!searchData?.status || !searchData?.result?.length) {
+            return await reply(`❌ No videos found for "${searchQuery}"! Try another query.`);
+        }
+
+        // Select random video from results
+        const videos = searchData.result;
+        const randomVideo = videos[Math.floor(Math.random() * videos.length)];
+        
+        // Get the video link from results
+        const videoLink = randomVideo.link;
+        
+        // Download the video using the link
+        const downloadUrl = `https://api.deline.web.id/downloader/xnxx?url=${encodeURIComponent(videoLink)}`;
+        const downloadRes = await axios.get(downloadUrl);
+        const downloadData = downloadRes.data;
+
+        if (!downloadData?.status || !downloadData?.result) {
+            return await reply("❌ Failed to download video!");
+        }
+
+        const result = downloadData.result;
+        
+        // Get high quality video URL
+        const videoUrl = result.files.high || result.files.low;
+        if (!videoUrl) {
+            return await reply("❌ No video URL found!");
+        }
+
+        // Send video with information
+        const caption = `
+🎬 *Title:* ${result.title || randomVideo.title || 'Unknown'}
+⏱️ *Duration:* ${result.duration || randomVideo.info?.split('\n')[0] || 'Unknown'}
+📺 *Quality:* ${result.videoHeight ? `${result.videoHeight}p` : 'HD'}
+👁️ *Views:* ${result.info?.split('\n')[2]?.trim() || 'Unknown'}
+🔍 *Searched:* ${searchQuery}
+
+> *Powered by LOVE-MD ✅*
+        `.trim();
+
+        await conn.sendMessage(from, {
+            video: { url: videoUrl },
+            mimetype: 'video/mp4',
+            caption: caption,
+            thumbnail: result.files?.thumb ? { url: result.files.thumb } : null
         }, { quoted: mek });
 
+        await conn.sendMessage(from, { react: { text: '✅', key: m.key } });
+
     } catch (e) {
-        console.log("Error in v command: ", e);
-        reply("*Bhai, video load hone mein masla aa raha hai, baad mein try karo.*");
+        console.error("Error in .xnxx:", e);
+        
+        if (e.response?.status === 404) {
+            await reply("❌ API endpoint not found! The service might be temporarily unavailable.");
+        } else {
+            await reply("❌ Error occurred while processing your request!\n\n" + e.message);
+        }
+        
+        await conn.sendMessage(from, { react: { text: '❌', key: m.key } });
     }
 });
