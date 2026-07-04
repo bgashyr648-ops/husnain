@@ -1,138 +1,89 @@
-const { cmd } = require('../command');
+const axios = require("axios");
+const { cmd } = require("../command");
 
-// Command: .v (Yeh waisi hi hai jaisi pehle thi)
 cmd({
-    pattern: "v",
-    desc: "Random video share karne ke liye",
-    category: "fun",
-    react: "🎥",
-    filename: __filename,
-    use: ".v"
-}, async (conn, mek, m, { reply }) => {
+    pattern: "tiktoksearch",
+    alias: ["ttsearch", "t"],
+    desc: "Search TikTok videos for songs, motivation, funny, sad, poetry & ego",
+    category: "download",
+    react: "🎵",
+    filename: __filename
+}, async (conn, mek, m, { from, q, reply }) => {
     try {
-        const videoUrls = [
-            "https://files.catbox.moe/n5esbw.mp4",
-            "https://files.catbox.moe/tmiz6x.mp4",
-            "https://files.catbox.moe/l323fi.mp4",
-            "https://files.catbox.moe/eywvi9.mp4",
-            "https://files.catbox.moe/4kf22n.mp4",
-            "https://files.catbox.moe/q593vp.mp4",
-            "https://files.catbox.moe/rqa06l.mp4",
-            "https://files.catbox.moe/3rhm0o.mp4",
-            "https://files.catbox.moe/cy6d9h.mp4",
-            "https://files.catbox.moe/4cngxm.mp4",
-            "https://files.catbox.moe/03v9r3.mp4",
-            "https://files.catbox.moe/mwxtq3.mp4",
-            "https://files.catbox.moe/z3j9qd.mp4",
-            "https://files.catbox.moe/lu683j.mp4",
-            "https://files.catbox.moe/qk0cgw.mp4",
-            "https://files.catbox.moe/c4xjll.mp4",
-            "https://files.catbox.moe/ya7rvd.mp4",
-            "https://files.catbox.moe/5f85sq.mp4",
-            "https://files.catbox.moe/k1fajp.mp4",
-            "https://files.catbox.moe/k4jbpb.mp4",
-            "https://files.catbox.moe/9bjhsk.mp4",
-            "https://files.catbox.moe/ihdnij.mp4",
-            "https://files.catbox.moe/xh2wm4.mp4",
-            "https://files.catbox.moe/ltpd6m.mp4",
-            "https://files.catbox.moe/zf14q1.mp4",
-            "https://files.catbox.moe/bnyt3v.mp4",
-            "https://files.catbox.moe/a1l6ac.mp4",
-            "https://files.catbox.moe/liqskk.mp4",
-            "https://files.catbox.moe/8fem9l.mp4",
-            "https://files.catbox.moe/40uie3.mp4",
-            "https://files.catbox.moe/9s99z3.mp4",
-            "https://files.catbox.moe/6msuhj.mp4",
-            "https://files.catbox.moe/w7kdva.mp4",
-            "https://files.catbox.moe/iiwo7y.mp4",
-            "https://files.catbox.moe/guohji.mp4",
-            "https://files.catbox.moe/ms0j4g.mp4",
-            "https://files.catbox.moe/aqnmev.mp4",
-            "https://files.catbox.moe/d3qdyp.mp4",
-            "https://files.catbox.moe/iyh1cu.mp4",
-            "https://files.catbox.moe/q27i3h.mp4",
+        // Default search queries array
+        const defaultQueries = [
+            "songs",
+            "music",
+            "motivation",
+            "funny videos",
+            "sad songs",
+            "urdu poetry",
+            "ego"
         ];
 
-        const randomUrl = videoUrls[Math.floor(Math.random() * videoUrls.length)];
+        // Use provided query or pick random default
+        let searchQuery = q;
+        if (!searchQuery) {
+            searchQuery = defaultQueries[Math.floor(Math.random() * defaultQueries.length)];
+            await reply(`🎯 No query provided! Searching random: *${searchQuery}*`);
+        }
 
-        await conn.sendMessage(m.chat, { 
-            video: { url: randomUrl }, 
-            mimetype: "video/mp4",
-            caption: "*Ye lo, Bagga Sher ki taraf se ek nayi video!* 🎬\n\n*Powered by Love MD*" 
+        await conn.sendMessage(from, { react: { text: '⏳', key: m.key } });
+
+        // Search TikTok videos
+        const searchUrl = `https://api.danzy.web.id/api/search/tiktok?q=${encodeURIComponent(searchQuery)}`;
+        const searchRes = await axios.get(searchUrl);
+        const searchData = searchRes.data;
+
+        if (!searchData?.status || !searchData?.result?.length) {
+            return await reply(`❌ No videos found for "${searchQuery}"! Try another query.`);
+        }
+
+        // Select random video from results
+        const videos = searchData.result;
+        const randomVideo = videos[Math.floor(Math.random() * videos.length)];
+        
+        // Get video details
+        const videoTitle = randomVideo.title || 'No Title';
+        const videoUrl = randomVideo.link || randomVideo.watermark_link;
+        const author = randomVideo.author?.nickname || 'Unknown';
+        const avatar = randomVideo.author?.avatar || '';
+        const stats = randomVideo.stats || {};
+        
+        // Get music info if available
+        const music = randomVideo.music || 'No music info';
+
+        // Send video
+        await conn.sendMessage(from, {
+            video: { url: videoUrl },
+            mimetype: 'video/mp4',
+            caption: `
+🎬 *Title:* ${videoTitle}
+👤 *Author:* ${author}
+🎵 *Music:* ${music}
+📊 *Stats:*
+   • 👁️ Plays: ${stats.plays || 'N/A'}
+   • ❤️ Likes: ${stats.likes || 'N/A'}
+   • 💬 Comments: ${stats.comments || 'N/A'}
+   • 🔗 Shares: ${stats.shares || 'N/A'}
+🔍 *Searched:* ${searchQuery}
+
+> *Powered by LOVE-MD ✅*
+            `.trim(),
+            thumbnail: avatar ? { url: avatar } : null
         }, { quoted: mek });
 
-    } catch (e) {
-        console.log("Error in v command: ", e);
-        reply("*Bhai, video load hone mein masla aa raha hai, baad mein try karo.*");
-    }
-});
-
-// Command: .xv (Caption update kar di gayi hai)
-cmd({
-    pattern: "xv",
-    desc: "Naye links se random video share karne ke liye",
-    category: "fun",
-    react: "🎥",
-    filename: __filename,
-    use: ".xv"
-}, async (conn, mek, m, { reply }) => {
-    try {
-        const customVideoUrls = [
-            "https://files.catbox.moe/wh6g7m.mp4",
-            "https://files.catbox.moe/u4iiqo.mp4",
-            "https://files.catbox.moe/r4yxyt.mp4",
-            "https://files.catbox.moe/mpi9ra.mp4",
-            "https://files.catbox.moe/tmcz6s.mp4",
-            "https://files.catbox.moe/e8v152.mp4",
-            "https://files.catbox.moe/djcdxd.mp4",
-            "https://files.catbox.moe/6fmie7.mp4",
-            "https://files.catbox.moe/z0cgez.mp4",
-            "https://files.catbox.moe/6u6ybx.mp4",
-            "https://files.catbox.moe/dmvdkq.mp4",
-            "https://files.catbox.moe/sitrus.mp4",
-            "https://files.catbox.moe/epj4lp.mp4",
-            "https://files.catbox.moe/a92ggd.mp4",
-            "https://files.catbox.moe/5o22ff.mp4",
-            "https://files.catbox.moe/jqgybi.mp4",
-            "https://files.catbox.moe/7e03pc.mp4",
-            "https://files.catbox.moe/ertnlj.mp4",
-            "https://files.catbox.moe/b9xe5l.mp4",
-            "https://files.catbox.moe/d3qdyp.mp4",
-            "https://files.catbox.moe/q27i3h.mp4",
-            "https://files.catbox.moe/d3qdyp.mp4",
-            "https://files.catbox.moe/iyh1cu.mp4",
-            "https://files.catbox.moe/txwkut.mp4",
-            "https://files.catbox.moe/f2uu2w.mp4",
-            "https://files.catbox.moe/igri8u.mp4",
-            "https://files.catbox.moe/amam7y.mp4",
-            "https://files.catbox.moe/uf5ucp.mp4",
-            "https://files.catbox.moe/aiu05b.mp4",
-            "https://files.catbox.moe/gp9dqw.mp4",
-            "https://files.catbox.moe/2jkdmg.mp4",
-            "https://files.catbox.moe/je3ebd.mp4",
-            "https://files.catbox.moe/xgmhfq.mp4",
-            "https://files.catbox.moe/ah612r.mp4",
-            "https://files.catbox.moe/lvbpbo.mp4",
-            "https://files.catbox.moe/5m790u.mp4",
-            "https://files.catbox.moe/yfn97c.mp4",
-            "https://files.catbox.moe/7gk46u.mp4",
-            "https://files.catbox.moe/0z2qim.mp4",
-            "https://files.catbox.moe/xafukz.mp4",
-            "https://files.catbox.moe/gsn7ix.mp4",
-            "https://files.catbox.moe/82m194.mp4",
-            "https://files.catbox.moe/zcowb1.mp4"
-        ];
-
-        const randomUrl = customVideoUrls[Math.floor(Math.random() * customVideoUrls.length)];
-
-        await conn.sendMessage(m.chat, { 
-            video: { url: randomUrl }, 
-            mimetype: "video/mp4",
-            caption: "*Ye lo, Love MD ki taraf se video!* 🎬" 
-        }, { quoted: mek });
+        await conn.sendMessage(from, { react: { text: '✅', key: m.key } });
 
     } catch (e) {
-        console.log("Error in xv command: ", e);
-        reply("*Shera, video bhejne mein kuch gadbad ho gayi hai.*");
+        console.error("Error in .tiktoksearch:", e);
+        
+        if (e.response?.status === 404) {
+            await reply("❌ API endpoint not found! The service might be temporarily unavailable.");
+        } else {
+            await reply("❌ Error occurred while processing your request!\n\n" + e.message);
+        }
+        
+        await conn.sendMessage(from, { react: { text: '❌', key: m.key } });
     }
 });
