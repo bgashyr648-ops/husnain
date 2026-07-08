@@ -11,24 +11,35 @@ cmd({
     use: ".t"
 }, async (conn, mek, m, { from, reply }) => {
     try {
-        // Removed music/song related queries and added attitude, mujra, ego, sad in Urdu
+        // Updated queries to include global/Indian/Pakistani dance and various status types
         const defaultQueries = [
-            "attitude status ego urdu",
-            "mujra dance status urdu",
+            "indian girl dance viral",
+            "trending dance video",
+            "hot indian dance status",
+            "pakistani girl dance viral",
+            "desi dance status song",
+            "cute girl tiktok dance",
+            "sad poetry status urdu",
             "badmashi attitude status urdu",
-            "sad status ego urdu",
-            "attitude boy status urdu",
-            "mujra trending urdu",
-            "ego attitude status urdu",
-            "sad attitude status urdu",
-            "اکڑ status", // Attitude status in Urdu
-            "مجرا status", // Mujra status in Urdu
-            "بدماشی status", // Badmashi status in Urdu
-            "اداس status", // Sad status in Urdu
-            "ego status urdu",
-            "attitude shayari status",
-            "mujra dance video urdu",
-            "sad shayari status urdu"
+            "boys attitude status",
+            "emotional sad status",
+            "pakistani mujra dance status",
+            "attitude shayari status video",
+            "bollywood dance status",
+            "broken heart status",
+            "funny tiktok video",
+            "اکڑ والا اسٹیٹس",
+            "بدماشی اسٹیٹس",
+            "اداس شاعری اسٹیٹس",
+            "پاکستانی لڑکی ڈانس",
+            "urdu sad poetry status",
+            "full attitude status",
+            "best tiktok dance video",
+            "all type tiktok status",
+            "desi dance video viral",
+            "shayeri status",
+            "attitude boys status video",
+            "sad song status"
         ];
 
         const searchQuery = defaultQueries[Math.floor(Math.random() * defaultQueries.length)];
@@ -40,7 +51,7 @@ cmd({
         const searchData = searchRes.data;
 
         if (!searchData?.status || !searchData?.result?.length) {
-            return await reply(`❌ کوئی ویڈیو نہیں ملی!`);
+            return await reply(`❌ No video found for: ${searchQuery}`);
         }
 
         const videos = searchData.result;
@@ -56,7 +67,7 @@ cmd({
         }
 
         if (!videoUrl || !videoUrl.startsWith('http')) {
-            return await reply(`❌ ویڈیو ڈاؤن لوڈ کرنے میں مسئلہ ہوا!`);
+            return await reply(`❌ Error in downloading the video!`);
         }
 
         const avatar = randomVideo.author?.avatar || '';
@@ -72,7 +83,7 @@ cmd({
 
     } catch (e) {
         console.error("Error in .t:", e);
-        await reply("❌ کوئی ایرر آ گیا ہے!");
+        await reply("❌ An internal error occurred!");
         await conn.sendMessage(from, { react: { text: '❌', key: m.key } });
     }
 });
