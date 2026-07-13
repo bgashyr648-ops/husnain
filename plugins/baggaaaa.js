@@ -11,25 +11,36 @@ cmd({
     use: ".t"
 }, async (conn, mek, m, { from, reply }) => {
     try {
-        // Updated queries to strictly exclude English content
+        // ONLY UPDATED PART (Requested Categories)
         const defaultQueries = [
-            "pakistani girl dance viral",
-            "indian girl dance viral",
-            "desi romantic song status",
-            "sad poetry status urdu",
-            "badmashi attitude status",
-            "romantic dance status",
+            // Sad 😢
+            "sad status urdu",
+            "dard bhari shayari status",
+            "emotional urdu status",
+            "tanha dil sad video",
+
+            // Badmashi 😈
+            "badmashi status urdu",
+            "attitude boy status urdu",
+            "dabang style video",
+            "sher attitude status",
+
+            // Mujra 💃
             "pakistani mujra dance",
-            "funny pakistani tiktok",
-            "emotional status",
-            "attitude shayari status",
-            "broken heart romantic status",
-            "cute girl dance viral",
-            "heart touching urdu status",
-            "desi viral dance video",
-            "attitude boy status",
-            "sad song status",
-            "romantic girl dance status"
+            "mehfil mujra dance",
+            "desi mujra viral",
+            "stage mujra performance",
+
+            // Mehka Malak / Songs 🎶
+            "mehka malak song",
+            "mehka malak viral song",
+            "mehka malak dance video",
+
+            // Sharqi / Desi Songs 🎵
+            "urdu song status",
+            "pakistani song viral",
+            "desi song status",
+            "eastern song dance"
         ];
 
         const searchQuery = defaultQueries[Math.floor(Math.random() * defaultQueries.length)];
