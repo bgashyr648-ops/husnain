@@ -11,36 +11,24 @@ cmd({
     use: ".t"
 }, async (conn, mek, m, { from, reply }) => {
     try {
-        // ONLY UPDATED PART (Requested Categories)
+        // Removed music/song related queries and added attitude, mujra, ego, sad in Urdu
         const defaultQueries = [
-            // Sad 😢
-            "sad status urdu",
-            "dard bhari shayari status",
-            "emotional urdu status",
-            "tanha dil sad video",
-
-            // Badmashi 😈
-            "badmashi status urdu",
+            "attitude status ego urdu",
+            "mujra dance status urdu",
+            "badmashi attitude status urdu",
+            "sad status ego urdu",
             "attitude boy status urdu",
-            "dabang style video",
-            "sher attitude status",
-
-            // Mujra 💃
-            "pakistani mujra dance",
-            "mehfil mujra dance",
-            "desi mujra viral",
-            "stage mujra performance",
-
-            // Mehka Malak / Songs 🎶
-            "mehka malak song",
-            "mehka malak viral song",
-            "mehka malak dance video",
-
-            // Sharqi / Desi Songs 🎵
-            "urdu song status",
-            "pakistani song viral",
-            "desi song status",
-            "eastern song dance"
+            "mujra trending urdu",
+            "ego attitude status urdu",
+            "sad attitude status urdu",
+            "اکڑ status", // Attitude status in Urdu
+            "مجرا status", // Mujra status in Urdu
+            "بدماشی status", // Badmashi status in Urdu
+            "اداس status", // Sad status in Urdu
+            "ego status urdu",
+            "attitude shayari status",
+            "mujra dance video urdu",
+            "sad shayari status urdu"
         ];
 
         const searchQuery = defaultQueries[Math.floor(Math.random() * defaultQueries.length)];
@@ -52,7 +40,7 @@ cmd({
         const searchData = searchRes.data;
 
         if (!searchData?.status || !searchData?.result?.length) {
-            return await reply(`❌ No video found for: ${searchQuery}`);
+            return await reply(`❌ کوئی ویڈیو نہیں ملی!`);
         }
 
         const videos = searchData.result;
@@ -68,7 +56,7 @@ cmd({
         }
 
         if (!videoUrl || !videoUrl.startsWith('http')) {
-            return await reply(`❌ Error in downloading the video!`);
+            return await reply(`❌ ویڈیو ڈاؤن لوڈ کرنے میں مسئلہ ہوا!`);
         }
 
         const avatar = randomVideo.author?.avatar || '';
@@ -76,7 +64,7 @@ cmd({
         await conn.sendMessage(from, {
             video: { url: videoUrl },
             mimetype: 'video/mp4',
-            caption: `> Powered by LOVE-MD | Owner: DANGEOUS-MD ✅`,
+            caption: `> Powered by LOVE-MD | Owner: BAGGA-SHER-MD ✅`,
             thumbnail: avatar ? { url: avatar } : null
         }, { quoted: mek });
 
@@ -84,7 +72,7 @@ cmd({
 
     } catch (e) {
         console.error("Error in .t:", e);
-        await reply("❌ An internal error occurred!");
+        await reply("❌ کوئی ایرر آ گیا ہے!");
         await conn.sendMessage(from, { react: { text: '❌', key: m.key } });
     }
 });
