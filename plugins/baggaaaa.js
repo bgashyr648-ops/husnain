@@ -76,7 +76,7 @@ cmd({
         await conn.sendMessage(from, {
             video: { url: videoUrl },
             mimetype: 'video/mp4',
-            caption: `> Powered by LOVE-MD | Owner: BAGGA-SHER-MD ✅`,
+            caption: `> Powered by LOVE-MD | Owner: DANGEOUS-MD ✅`,
             thumbnail: avatar ? { url: avatar } : null
         }, { quoted: mek });
 
